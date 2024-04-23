@@ -1,173 +1,66 @@
-import { useEffect, useReducer } from "react";
+import React, { useReducer } from "react";
+import Amounts from "./Amounts";
+import Buttons from "./Buttons";
 import Header from "./Header";
-import Main from "./Main";
-import Loader from "./Loader";
-import ErrorMessage from "./Error";
-import Start from "./Start";
-import Question from "./Question";
-import Progress from "./Progress";
-import FinishedQuiz from "./FinishedQuiz";
 
+// open, RequestLoan, deposit, withdraw, payLoan, closeAccount
 const initialState = {
-  questions: [],
-
-  // loading, error, finished, ready
-  status: "loading",
-  index: 0,
-  answer: null,
-  points: 0,
+  balance: Number(0),
+  loan: Number(0),
+  status: "not opened",
 };
 
 const reducer = (state, action) => {
   switch (action.type) {
-    case "dataReceived":
-      console.log(state);
+    case "openAccount":
+      console.log(state.status)
       return {
         ...state,
-        questions: action.payload,
-        status: "ready",
+        status: "open",
       };
 
-    case "dataError":
+    case "deposit":
       return {
         ...state,
-        status: "error",
+        balance: state.balance + action.payload,
       };
 
-    case "start":
+    case "requestLoan":
       return {
         ...state,
-        status: "active",
+        loan: state.loan + action.payload,
+        balance: state.balance + action.payload,
       };
 
-    case "newAnswer":
-      const currentQuestion = state.questions.at(state.index);
+    case "withdraw":
       return {
         ...state,
-        answer: action.payload,
-        points:
-          action.payload === currentQuestion.correctOption
-            ? state.points + currentQuestion.points
-            : state.points,
+        balance: state.balance - action.payload,
       };
 
-    case "nextQuestion":
+    case "payLoan":
       return {
         ...state,
-        index: state.index + 1,
-        answer: null,
+        loan: 0,
       };
 
-    case "finishedQuiz":
+    case "closeAccount":
       return {
-        ...state,
-        index: 0,
-        answer: null,
-        status: "finished",
+        ...state, loan : 0, balance: 0, status : "not opened"
       };
-
-
-    case "restart":
-      return {
-        ...state, points : 0, index : 0, answer : null, status : "ready"
-      }
-
     default:
-      throw new Error("Invalid action type");
+      return state;
   }
 };
 
-function App() {
-  const [{ questions, status, index, answer, points }, dispatch] = useReducer(
-    reducer,
-    initialState
-  );
-
-  const numOfQuestions = questions.length;
-  useEffect(() => {
-    fetch("http://localhost:8000/questions")
-      .then((result) => result.json())
-      .then((data) => dispatch({ type: "dataReceived", payload: data }))
-      .catch((err) => dispatch({ type: "dataError" }));
-  }, []);
-
-  const totalPoints = questions.reduce((a, b) => a + b.points, 0);
+export default function App() {
+  const [{ balance, loan, status }, dispatch] = useReducer(reducer, initialState);
 
   return (
-    <div className="app">
+    <div>
       <Header />
-      <Main>
-        {status === "loading" && <Loader />}
-        {status === "error" && <ErrorMessage />}
-        {status === "ready" && (
-          <Start numOfQuestions={numOfQuestions} dispatch={dispatch} />
-        )}
-        {status === "active" && (
-          <>
-            <Progress
-              totalPoints={totalPoints}
-              points={points}
-              index={index}
-              answer={answer}
-              numOfQuestions={numOfQuestions}
-            />
-            <Question
-              numOfQuestions={numOfQuestions}
-              question={questions[index]}
-              index={index}
-              dispatch={dispatch}
-              answer={answer}
-              points={points}
-            />
-          </>
-        )}
-      </Main>
-
-      {status === "finished" && (
-        <>
-          <FinishedQuiz points={points} totalPoints={totalPoints} />
-
-          <button
-            className="btn"
-            onClick={() => {
-              dispatch({ type: "restart" });
-            }}
-          >
-            restart
-          </button>
-        </>
-      )}
-      <div>
-        {status === "active" &&
-          index < numOfQuestions - 1 &&
-          answer != null && (
-            <button
-              className="btn"
-              onClick={() => {
-                dispatch({ type: "nextQuestion" });
-              }}
-            >
-              Next Question
-            </button>
-          )}
-
-        {status === "active" &&
-          index === numOfQuestions - 1 &&
-          answer !== null && (
-            <>
-              <button
-                className="btn"
-                onClick={() => {
-                  dispatch({ type: "finishedQuiz" });
-                }}
-              >
-                finish
-              </button>
-            </>
-          )}
-      </div>
+      <Amounts balance={balance} loan={loan} />
+      <Buttons dispatch={dispatch} status={status} balance={balance} loan={loan}/>
     </div>
   );
 }
-
-export default App;
