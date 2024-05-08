@@ -17,7 +17,7 @@ const initialState = {
 const reducer = (state, action) => {
   switch (action.type) {
     case "dataReceived":
-      console.log(state);
+    //   console.log(state);
       return {
         ...state,
         questions: action.payload,
