@@ -1,4 +1,3 @@
-import { useEffect, useReducer } from "react";
 import Header from "./Header";
 import Main from "./Main";
 import Loader from "./Loader";
@@ -7,91 +6,10 @@ import Start from "./Start";
 import Question from "./Question";
 import Progress from "./Progress";
 import FinishedQuiz from "./FinishedQuiz";
-
-const initialState = {
-  questions: [],
-
-  // loading, error, finished, ready
-  status: "loading",
-  index: 0,
-  answer: null,
-  points: 0,
-};
-
-const reducer = (state, action) => {
-  switch (action.type) {
-    case "dataReceived":
-      console.log(state);
-      return {
-        ...state,
-        questions: action.payload,
-        status: "ready",
-      };
-
-    case "dataError":
-      return {
-        ...state,
-        status: "error",
-      };
-
-    case "start":
-      return {
-        ...state,
-        status: "active",
-      };
-
-    case "newAnswer":
-      const currentQuestion = state.questions.at(state.index);
-      return {
-        ...state,
-        answer: action.payload,
-        points:
-          action.payload === currentQuestion.correctOption
-            ? state.points + currentQuestion.points
-            : state.points,
-      };
-
-    case "nextQuestion":
-      return {
-        ...state,
-        index: state.index + 1,
-        answer: null,
-      };
-
-    case "finishedQuiz":
-      return {
-        ...state,
-        index: 0,
-        answer: null,
-        status: "finished",
-      };
-
-
-    case "restart":
-      return {
-        ...state, points : 0, index : 0, answer : null, status : "ready"
-      }
-
-    default:
-      throw new Error("Invalid action type");
-  }
-};
+import { useQuiz } from "./contexts/QuizProvider";
 
 function App() {
-  const [{ questions, status, index, answer, points }, dispatch] = useReducer(
-    reducer,
-    initialState
-  );
-
-  const numOfQuestions = questions.length;
-  useEffect(() => {
-    fetch("http://localhost:8000/questions")
-      .then((result) => result.json())
-      .then((data) => dispatch({ type: "dataReceived", payload: data }))
-      .catch((err) => dispatch({ type: "dataError" }));
-  }, []);
-
-  const totalPoints = questions.reduce((a, b) => a + b.points, 0);
+  const { status, numOfQuestions, dispatch, index, answer } = useQuiz();
 
   return (
     <div className="app">
@@ -104,28 +22,15 @@ function App() {
         )}
         {status === "active" && (
           <>
-            <Progress
-              totalPoints={totalPoints}
-              points={points}
-              index={index}
-              answer={answer}
-              numOfQuestions={numOfQuestions}
-            />
-            <Question
-              numOfQuestions={numOfQuestions}
-              question={questions[index]}
-              index={index}
-              dispatch={dispatch}
-              answer={answer}
-              points={points}
-            />
+            <Progress />
+            <Question />
           </>
         )}
       </Main>
 
       {status === "finished" && (
         <>
-          <FinishedQuiz points={points} totalPoints={totalPoints} />
+          <FinishedQuiz />
 
           <button
             className="btn"

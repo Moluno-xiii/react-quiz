@@ -1,14 +1,28 @@
 import React from "react";
-import { useQuiz } from "./contexts/QuizProvider";
 
-export default function Options() {
-  const { question, dispatch, answer } = useQuiz();
+export default function Options({ question, dispatch, answer, points }) {
   const disable = answer !== null;
   return (
+    // <div>
+    //     {question.options.map((option => (
+    //         <button className='btn btn-option' key={option} style={{marginBottom : "5px"}}>
+    //             {option}
+    //         </button>
+    //     )))}
+
     <div>
       {question.options.map((option, i) => {
         return (
           <button
+            // className={`btn btn-option ${
+            //   !disable
+            //     ? i === answer
+            //       ? "answer"
+            //       : ""
+            //     : question.correctOption === i
+            //     ? "correct"
+            //     : ""
+            // }`}
             className={`btn btn-option ${i === answer ? "answer" : ""} ${
               disable
                 ? i === question.correctOption
@@ -27,6 +41,8 @@ export default function Options() {
           </button>
         );
       })}
+
     </div>
+    // {/* </div> */}
   );
 }
